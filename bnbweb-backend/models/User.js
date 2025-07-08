@@ -28,10 +28,31 @@ const userSchema = new mongoose.Schema({
     trim: true,
     match: [/^[\+]?[1-9][\d]{9,13}$/, 'Please enter a valid phone number']
   },
+  dateOfBirth: {
+    type: Date
+  },
+  gender: {
+    type: String,
+    enum: ['male', 'female', 'other'],
+    lowercase: true
+  },
   role: {
     type: String,
     enum: ['customer', 'admin'],
     default: 'customer'
+  },
+  isEmailVerified: {
+    type: Boolean,
+    default: false
+  },
+  isPhoneVerified: {
+    type: Boolean,
+    default: false
+  },
+  otp: {
+    code: String,
+    expires: Date,
+    verified: { type: Boolean, default: false }
   },
   address: {
     street: String,

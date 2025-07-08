@@ -1,13 +1,19 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { generateToken, sendSuccess, sendError } = require('../utils/helpers');
+
+// Generate OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 // @desc    Register a new user
 // @route   POST /api/auth/register
 // @access  Public
 const register = asyncHandler(async (req, res) => {
-  const { name, email, password, phone } = req.body;
+  const { name, email, password, phone, dateOfBirth, gender } = req.body;
 
   // Check if user already exists
   const existingUser = await User.findOne({ email });
@@ -24,7 +30,9 @@ const register = asyncHandler(async (req, res) => {
     name,
     email,
     password: hashedPassword,
-    phone
+    phone,
+    dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+    gender
   });
 
   // Generate token
@@ -37,6 +45,8 @@ const register = asyncHandler(async (req, res) => {
       name: user.name,
       email: user.email,
       phone: user.phone,
+      dateOfBirth: user.dateOfBirth,
+      gender: user.gender,
       role: user.role
     }
   }, 201);
@@ -146,11 +156,131 @@ const logout = asyncHandler(async (req, res) => {
   sendSuccess(res, 'Logout successful');
 });
 
+// @desc    Send OTP for login
+// @route   POST /api/auth/send-otp
+// @access  Public
+const sendOTP = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  // Check if user exists
+  const user = await User.findOne({ email });
+  if (!user) {
+    return sendError(res, 'User not found', 404);
+  }
+
+  // Check if user is active
+  if (!user.isActive) {
+    return sendError(res, 'Account is inactive. Please contact support.', 401);
+  }
+
+  // Generate OTP
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+  // Update user with OTP
+  user.otp = {
+    code: otp,
+    expires: otpExpires,
+    verified: false
+  };
+  await user.save();
+
+  // In production, send OTP via SMS/Email
+  // For demo, we'll just return the OTP
+  console.log(`OTP for ${email}: ${otp}`);
+  
+  sendSuccess(res, 'OTP sent successfully', { 
+    message: 'OTP sent to your registered email/phone',
+    // Remove in production - only for demo
+    otp: otp 
+  });
+});
+
+// @desc    Verify OTP and login
+// @route   POST /api/auth/verify-otp
+// @access  Public
+const verifyOTP = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+
+  // Check if user exists
+  const user = await User.findOne({ email });
+  if (!user) {
+    return sendError(res, 'User not found', 404);
+  }
+
+  // Check if OTP exists and is not expired
+  if (!user.otp || !user.otp.code || user.otp.expires < new Date()) {
+    return sendError(res, 'OTP expired or invalid', 400);
+  }
+
+  // Check if OTP matches
+  if (user.otp.code !== otp) {
+    return sendError(res, 'Invalid OTP', 400);
+  }
+
+  // Mark OTP as verified and clear it
+  user.otp.verified = true;
+  user.otp.code = undefined;
+  user.otp.expires = undefined;
+  await user.save();
+
+  // Generate token
+  const token = generateToken(user._id);
+
+  sendSuccess(res, 'OTP verified and login successful', {
+    token,
+    user: {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role
+    }
+  });
+});
+
+// @desc    Resend OTP
+// @route   POST /api/auth/resend-otp
+// @access  Public
+const resendOTP = asyncHandler(async (req, res) => {
+  const { email } = req.body;
+
+  // Check if user exists
+  const user = await User.findOne({ email });
+  if (!user) {
+    return sendError(res, 'User not found', 404);
+  }
+
+  // Generate new OTP
+  const otp = generateOTP();
+  const otpExpires = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes from now
+
+  // Update user with new OTP
+  user.otp = {
+    code: otp,
+    expires: otpExpires,
+    verified: false
+  };
+  await user.save();
+
+  // In production, send OTP via SMS/Email
+  console.log(`New OTP for ${email}: ${otp}`);
+  
+  sendSuccess(res, 'OTP resent successfully', { 
+    message: 'New OTP sent to your registered email/phone',
+    // Remove in production - only for demo
+    otp: otp 
+  });
+});
+
 module.exports = {
   register,
   login,
   getProfile,
   updateProfile,
   changePassword,
-  logout
+  logout,
+  sendOTP,
+  verifyOTP,
+  resendOTP
 };

@@ -6,7 +6,10 @@ const {
   getProfile,
   updateProfile,
   changePassword,
-  logout
+  logout,
+  sendOTP,
+  verifyOTP,
+  resendOTP
 } = require('../controllers/authController');
 const { auth } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
@@ -29,7 +32,15 @@ const registerValidation = [
   body('phone')
     .optional()
     .isMobilePhone()
-    .withMessage('Please enter a valid phone number')
+    .withMessage('Please enter a valid phone number'),
+  body('dateOfBirth')
+    .optional()
+    .isISO8601()
+    .withMessage('Please enter a valid date of birth'),
+  body('gender')
+    .optional()
+    .isIn(['male', 'female', 'other'])
+    .withMessage('Please select a valid gender')
 ];
 
 const loginValidation = [
@@ -42,6 +53,23 @@ const loginValidation = [
     .withMessage('Password is required')
 ];
 
+const otpValidation = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please enter a valid email')
+];
+
+const verifyOtpValidation = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please enter a valid email'),
+  body('otp')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('OTP must be 6 digits')
+];
+
 const changePasswordValidation = [
   body('currentPassword')
     .notEmpty()
@@ -52,11 +80,16 @@ const changePasswordValidation = [
 ];
 
 // Routes
-router.post('/register', registerValidation, register);
-router.post('/login', loginValidation, login);
+router.post('/register', registerValidation, validate, register);
+router.post('/login', loginValidation, validate, login);
 router.get('/profile', auth, getProfile);
 router.put('/profile', auth, updateProfile);
-router.put('/change-password', auth, changePasswordValidation, changePassword);
+router.put('/change-password', auth, changePasswordValidation, validate, changePassword);
 router.post('/logout', auth, logout);
+
+// OTP Routes
+router.post('/send-otp', otpValidation, validate, sendOTP);
+router.post('/verify-otp', verifyOtpValidation, validate, verifyOTP);
+router.post('/resend-otp', otpValidation, validate, resendOTP);
 
 module.exports = router;

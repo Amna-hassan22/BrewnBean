@@ -616,9 +616,15 @@
                 <li><a href="#about">About</a></li>
                 <li><a href="#menu">Menu</a></li>
                 <li><a href="#locations">Locations</a></li>
-                 <li><a href="contact.html">Contact</a></li>
+                <li><a href="contact.html">Contact</a></li>
                 <li id="authNav">
-                    <a href="#" id="loginBtn">Login</a>
+                    <a href="login.html" id="loginBtn">Login</a>
+                </li>
+                <li id="userNav" style="display: none;">
+                    <a href="profile.html" id="profileBtn">Profile</a>
+                </li>
+                <li id="logoutNav" style="display: none;">
+                    <a href="#" id="logoutBtn" onclick="logout()">Logout</a>
                 </li>
             </ul>
             <div class="mobile-menu">
@@ -819,6 +825,7 @@
 
     <!-- API Integration Scripts -->
     <script src="js/api-integration.js"></script>
+    <script src="js/homepage-auth.js"></script>
 
     <script>
         // Loading screen
