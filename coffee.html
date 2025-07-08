@@ -7,6 +7,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <!-- Add API Integration Script -->
     <script src="js/api-integration.js"></script>
+    <script src="js/homepage-auth.js"></script>
     <style>
         * {
             margin: 0;
@@ -673,10 +674,17 @@
                 <li><a href="index.html#menu">Menu</a></li>
                 <li><a href="index.html#locations">Locations</a></li>
                 <li><a href="contact.html">Contact</a></li>
-                <!-- Auth buttons will be added here dynamically -->
-                <li id="authButtons" style="display: flex; gap: 10px; align-items: center;">
-                    <button onclick="showLoginForm()" style="background: #D2691E; border: none; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">Login</button>
-                    <button onclick="showRegisterForm()" style="background: transparent; border: 2px solid #D2691E; color: white; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">Register</button>
+                <li id="authNav">
+                    <a href="login.html" id="loginBtn">Login</a>
+                </li>
+                <li id="registerNav">
+                    <a href="register.html" id="registerBtn">Register</a>
+                </li>
+                <li id="userNav" style="display: none;">
+                    <a href="profile.html" id="profileBtn">Profile</a>
+                </li>
+                <li id="logoutNav" style="display: none;">
+                    <a href="#" id="logoutBtn" onclick="logout()">Logout</a>
                 </li>
             </ul>
             <div class="cart-icon" onclick="toggleCart()">
@@ -1179,36 +1187,7 @@
             if (window.enhancedCart) {
                 enhancedCart.loadCart();
             }
-            
-            // Update UI based on user status
-            updateUserUI();
         });
-
-        // Update UI based on authentication status
-        function updateUserUI() {
-            const user = api.getCurrentUser();
-            const authButtons = document.getElementById('authButtons');
-            
-            if (user && authButtons) {
-                // Hide login/register buttons and show user info
-                authButtons.innerHTML = `
-                    <span style="color: white; margin-right: 10px;">Welcome, ${user.name}!</span>
-                    <button onclick="logout()" style="background: #D2691E; border: none; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">Logout</button>
-                `;
-            } else if (authButtons) {
-                // Show login/register buttons
-                authButtons.innerHTML = `
-                    <button onclick="showLoginForm()" style="background: #D2691E; border: none; color: white; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">Login</button>
-                    <button onclick="showRegisterForm()" style="background: transparent; border: 2px solid #D2691E; color: white; padding: 6px 15px; border-radius: 5px; cursor: pointer; font-size: 14px;">Register</button>
-                `;
-            }
-        }
-
-        // Logout function
-        function logout() {
-            api.logout();
-            location.reload();
-        }
 
         // Override the existing addToCart function to use enhanced cart
         function addToCart(name, price) {

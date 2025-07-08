@@ -14,12 +14,14 @@ function updateAuthUI() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     
     const authNav = document.getElementById('authNav');
+    const registerNav = document.getElementById('registerNav');
     const userNav = document.getElementById('userNav');
     const logoutNav = document.getElementById('logoutNav');
 
     if (token && user.name) {
         // User is logged in
         authNav.style.display = 'none';
+        registerNav.style.display = 'none';
         userNav.style.display = 'block';
         logoutNav.style.display = 'block';
         
@@ -31,6 +33,7 @@ function updateAuthUI() {
     } else {
         // User is not logged in
         authNav.style.display = 'block';
+        registerNav.style.display = 'block';
         userNav.style.display = 'none';
         logoutNav.style.display = 'none';
     }

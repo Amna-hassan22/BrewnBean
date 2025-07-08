@@ -773,7 +773,16 @@
                 <li><a href="index.html#locations">Locations</a></li>
                 <li><a href="contact.html">Contact</a></li>
                 <li id="authNav">
-                    <a href="#" id="loginBtn">Login</a>
+                    <a href="login.html" id="loginBtn">Login</a>
+                </li>
+                <li id="registerNav">
+                    <a href="register.html" id="registerBtn">Register</a>
+                </li>
+                <li id="userNav" style="display: none;">
+                    <a href="profile.html" id="profileBtn">Profile</a>
+                </li>
+                <li id="logoutNav" style="display: none;">
+                    <a href="#" id="logoutBtn" onclick="logout()">Logout</a>
                 </li>
             </ul>
             <div class="cart-icon" onclick="toggleCart()">
@@ -1167,6 +1176,7 @@
 
     <!-- API Integration Script -->
     <script src="js/api-integration.js"></script>
+    <script src="js/homepage-auth.js"></script>
 
     <!-- JavaScript -->
     <script>
