@@ -1,0 +1,23 @@
+# Backend files
+node_modules/
+*.log
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Database
+*.db
+*.sqlite
+
+# Coverage
+coverage/
+
+# Temporary files
+*.tmp
+*.temp

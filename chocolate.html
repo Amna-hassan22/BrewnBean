@@ -1,0 +1,1239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchandise - Brew&Bean Coffee Company</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background-color: #fff;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            padding: 1rem 0;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #fff;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo i {
+            margin-right: 0.5rem;
+            font-size: 2.5rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            list-style: none;
+            gap: 2rem;
+        }
+
+        .nav-menu a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            transition: color 0.3s ease;
+            position: relative;
+        }
+
+        .nav-menu a:hover {
+            color: #FFD700;
+        }
+
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #FFD700;
+            transition: width 0.3s ease;
+        }
+
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+
+        .mobile-menu {
+            display: none;
+            color: #fff;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .cart-icon {
+            color: #fff;
+            font-size: 1.5rem;
+            position: relative;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .cart-icon:hover {
+            color: #FFD700;
+        }
+
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #FF4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, rgba(139, 69, 19, 0.9), rgba(210, 105, 30, 0.9)), 
+                        url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIwMCIgaGVpZ2h0PSI2MDAiIHZpZXdCb3g9IjAgMCAxMjAwIDYwMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEyMDAiIGhlaWdodD0iNjAwIiBmaWxsPSIjNDYyNTE4Ii8+CjxjaXJjbGUgY3g9IjMwMCIgY3k9IjE1MCIgcj0iNDAiIGZpbGw9IiM4QjQ1MTMiIG9wYWNpdHk9IjAuMyIvPgo8Y2lyY2xlIGN4PSI5MDAiIGN5PSI0MDAiIHI9IjYwIiBmaWxsPSIjRDI2OTFFIiBvcGFjaXR5PSIwLjIiLz4KPGNpcmNsZSBjeD0iNjAwIiBjeT0iMzAwIiByPSI4MCIgZmlsbD0iIzhCNDUxMyIgb3BhY2l0eT0iMC4xNSIvPgo8L3N2Zz4K');
+            background-size: cover;
+            background-position: center;
+             background-image: url("images/chocolatesanime.gif");
+            opacity: 0.7;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            color: #fff;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 30% 70%, rgba(255, 215, 0, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 30%, rgba(139, 69, 19, 0.2) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+           
+            max-width: 900px;
+            padding: 2rem;
+            animation: fadeInUp 1s ease-out;
+            z-index: 2;
+            position: relative;
+        }
+
+        .hero h1 {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            font-weight: 700;
+            /* text-shadow: 2px 2px 4px rgba(0,0,0,0.5); */
+            background: linear-gradient(45deg, #f1f1f0, #e3e2e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            font-weight: 300;
+            color: #FFD700;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .hero p {
+            font-size: 1.3rem;
+            margin-bottom: 2rem;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background: linear-gradient(45deg, #D2691E, #FF8C00);
+            color: #fff;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 30px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            border: none;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+        }
+
+        .cta-button.secondary {
+            background: linear-gradient(45deg, #8B4513, #A0522D);
+        }
+
+          /* Coffee Grid Section */
+        .coffee-section {
+            padding: 5rem 2rem;
+            background: #f8f8f8;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            text-align: center;
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: #8B4513;
+            position: relative;
+            font-weight: 700;
+        }
+
+        .section-subtitle {
+            text-align: center;
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+            color: #666;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: linear-gradient(45deg, #D2691E, #FF8C00);
+            border-radius: 2px;
+        }
+
+        .coffee-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-top: 3rem;
+        }
+
+        .coffee-card {
+            background: #fff;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .coffee-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+        }
+
+        .coffee-image {
+            height: 250px;
+            background: linear-gradient(135deg, #8B4513, #D2691E);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 4rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .coffee-image::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at center, rgba(255,255,255,0.1) 0%, transparent 70%);
+        }
+
+        .coffee-info {
+            padding: 2rem;
+        }
+
+        .coffee-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8B4513;
+            margin-bottom: 0.5rem;
+        }
+
+        .coffee-description {
+            color: #666;
+            margin-bottom: 1rem;
+            line-height: 1.6;
+        }
+
+        .coffee-details {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .coffee-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #D2691E;
+        }
+
+        .coffee-rating {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stars {
+            color: #FFD700;
+        }
+
+        .rating-text {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .coffee-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .btn {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 25px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 0.9rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(45deg, #D2691E, #FF8C00);
+            color: #fff;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(210, 105, 30, 0.4);
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: #8B4513;
+            border: 2px solid #8B4513;
+        }
+
+        .btn-secondary:hover {
+            background: #8B4513;
+            color: #fff;
+        }
+
+        /* Popular Badge */
+        .popular-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(45deg, #FF4444, #FF6B6B);
+            color: #fff;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Cart Modal */
+        .cart-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .cart-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .cart-content {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 70vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .cart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8B4513;
+        }
+
+        .close-cart {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+        }
+
+        .cart-items {
+            margin-bottom: 1.5rem;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            color: #8B4513;
+        }
+
+        .cart-item-price {
+            color: #D2691E;
+            font-weight: 600;
+        }
+
+        .cart-total {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #8B4513;
+            margin-bottom: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #f0f0f0;
+        }
+        .footer {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            color: #fff;
+            padding: 3rem 2rem 1rem;
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .footer-section h3 {
+            margin-bottom: 1rem;
+            color: #FFD700;
+        }
+
+        .footer-section a {
+            color: #fff;
+            text-decoration: none;
+            display: block;
+            margin-bottom: 0.5rem;
+            transition: color 0.3s ease;
+        }
+
+        .footer-section a:hover {
+            color: #FFD700;
+        }
+
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .social-links a {
+            font-size: 1.5rem;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+
+        .social-links a:hover {
+            background: #FFD700;
+            color: #8B4513;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding-top: 2rem;
+            border-top: 1px solid rgba(255,255,255,0.2);
+            margin-top: 2rem;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+
+        .pulse {
+            animation: pulse 0.3s ease-in-out;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            z-index: 3000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        /* Authentication Modal */
+        .auth-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .auth-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .auth-content {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 400px;
+            width: 90%;
+            position: relative;
+        }
+
+        .auth-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .auth-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8B4513;
+        }
+
+        .close-auth {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: #8B4513;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #8B4513;
+        }
+
+        .auth-switch {
+            text-align: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e0e0e0;
+        }
+
+        .auth-switch a {
+            color: #8B4513;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .auth-switch a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .hero p {
+                font-size: 1.1rem;
+            }
+
+            .coffee-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .coffee-actions {
+                flex-direction: column;
+            }
+
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .nav-menu {
+                display: none;
+            }
+        }
+
+        /* Scroll indicator */
+        .scroll-indicator {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            font-size: 2rem;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {
+                transform: translateX(-50%) translateY(0);
+            }
+            40% {
+                transform: translateX(-50%) translateY(-10px);
+            }
+            60% {
+                transform: translateX(-50%) translateY(-5px);
+            }
+        }
+
+        /* Cart Modal */
+        .cart-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .cart-modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .cart-content {
+            background: #fff;
+            border-radius: 20px;
+            padding: 2rem;
+            max-width: 500px;
+            width: 90%;
+            max-height: 70vh;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .cart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        .cart-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8B4513;
+        }
+
+        .close-cart {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #666;
+            padding: 0;
+        }
+
+        .cart-items {
+            margin-bottom: 1.5rem;
+        }
+
+        .cart-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .cart-item:last-child {
+            border-bottom: none;
+        }
+
+        .cart-item-info {
+            flex: 1;
+        }
+
+        .cart-item-name {
+            font-weight: 600;
+            color: #8B4513;
+        }
+
+        .cart-item-price {
+            color: #D2691E;
+            font-weight: 600;
+        }
+
+        .cart-total {
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #8B4513;
+            margin-bottom: 1rem;
+            padding-top: 1rem;
+            border-top: 2px solid #f0f0f0;
+        }
+
+        .pulse {
+            animation: pulse 0.3s ease-in-out;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 25px;
+            font-weight: 600;
+            z-index: 3000;
+            transform: translateX(400px);
+            transition: transform 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+    </style>
+
+</head>
+<body>
+  <!-- Header -->
+    <header class="header">
+        <nav class="nav-container">
+            <a href="index.html" class="logo">
+                <i class="fas fa-coffee"></i>
+                Brew & Bean
+            </a>
+            <ul class="nav-menu">
+                <li><a href="index.html">Home</a></li>
+                <li><a href="index.html#about">About</a></li>
+                <li><a href="index.html#menu">Menu</a></li>
+                <li><a href="index.html#locations">Locations</a></li>
+                <li><a href="contact.html">Contact</a></li>
+                <li id="authNav">
+                    <a href="#" id="loginBtn">Login</a>
+                </li>
+            </ul>
+            <div class="cart-icon" onclick="toggleCart()">
+                <i class="fas fa-shopping-cart"></i>
+                <span class="cart-count" id="cartCount">0</span>
+            </div>
+            <div class="mobile-menu">
+                <i class="fas fa-bars"></i>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero" id="home">
+        <div class="hero-content">
+            <h1>Explore Chocolates&Nuts</h1>
+            <p class="hero-subtitle">Discover the Silkiest chocolates</p>
+            <p>The Freshly cocoa prepared chocolates</p>
+            <div class="hero-buttons">
+                <a href="#coffee" class="cta-button">Shop products</a>
+               
+            </div>
+        </div>
+        <div class="scroll-indicator">
+            <i class="fas fa-chevron-down"></i>
+        </div>
+    </section>
+
+    <section class="coffee-section" id="coffee">
+        <div class="container">
+            <h2 class="section-title">Our Product Collection</h2>
+        
+            
+            <div class="coffee-grid">
+                <!-- Coffee Card 1 -->
+                <div class="coffee-card">
+                    <div class="popular-badge">Popular</div>
+                    <div class="coffee-image">
+                       <img src="images/chochobar.webp" alt="chai" style="width: 100%; height: 100%;">
+                    </div>
+                    <div class="coffee-info">
+                        <h3 class="coffee-name">Dark Chocolate</h3>
+                        <p class="coffee-description">Made with 90% cocoa</p>
+                        <div class="coffee-details">
+                            <span class="coffee-price">₹1200</span>
+                            <div class="coffee-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <span class="rating-text">(3.7)</span>
+                            </div>
+                        </div>
+                        <div class="coffee-actions">
+                            <button class="btn btn-primary" onclick="buyNow('Dark Chocolate', 1200)">Buy Now</button>
+                            <button class="btn btn-secondary" onclick="addToCart('Dark Chocolate', 1200)">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coffee Card 2 -->
+                <div class="coffee-card">
+                    <div class="coffee-image">
+                        <img src="images/milkchocho.webp" alt="Cappuccino Supreme" style="width: 100%; height: 100%;">
+                    </div>
+                    <div class="coffee-info">
+                        <h3 class="coffee-name">Milk Chocolate</h3>
+                        <p class="coffee-description">Made with milky flavour essence .</p>
+                        <div class="coffee-details">
+                            <span class="coffee-price">₹830</span>
+                            <div class="coffee-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <span class="rating-text">(4.7)</span>
+                            </div>
+                        </div>
+                        <div class="coffee-actions">
+                            <button class="btn btn-primary" onclick="buyNow('Milk Chocolate', 830)">Buy Now</button>
+                            <button class="btn btn-secondary" onclick="addToCart('Milk Chocolate', 830)">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coffee Card 3 -->
+                <div class="coffee-card">
+                    <div class="coffee-image">
+                        <img src="images/hazelnuts.jpeg" alt="Americano Gold" style="width: 100%; height: 100%;">
+                    </div>
+                    <div class="coffee-info">
+                        <h3 class="coffee-name" >Hazelnut Chocolate </h3>
+                        <p class="coffee-description">Made with 70% hazelnut and added sweetners. </p>
+                        <div class="coffee-details">
+                            <span class="coffee-price">₹780</span>
+                            <div class="coffee-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <span class="rating-text">(4.8)</span>
+                            </div>
+                        </div>
+                        <div class="coffee-actions">
+                            <button class="btn btn-primary" onclick="buyNow('Hazelnut Chocolate', 780)">Buy Now</button>
+                            <button class="btn btn-secondary" onclick="addToCart('Hazelnut Chocolate', 780)">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coffee Card 4 -->
+                <div class="coffee-card">
+                    <div class="popular-badge">Popular</div>
+                    <div class="coffee-image">
+                        <img src="images/walnuts.webp" alt="Iced Frappuccino" style="width: 100%; height: 100%;">
+                    </div>
+                    <div class="coffee-info">
+                        <h3 class="coffee-name">Walnut</h3>
+                        <p class="coffee-description">Packed fresh walnuts in the box</p>
+                        <div class="coffee-details">
+                            <span class="coffee-price">₹700</span>
+                            <div class="coffee-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <span class="rating-text">(4.9)</span>
+                            </div>
+                        </div>
+                        <div class="coffee-actions">
+                            <button class="btn btn-primary" onclick="buyNow('Walnut', 700)">Buy Now</button>
+                            <button class="btn btn-secondary" onclick="addToCart('Walnut', 700)">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coffee Card 5 -->
+                <div class="coffee-card">
+                    <div class="coffee-image">
+                        <img src="images/almond.webp" alt="" style="width: 100%; height: 100%;"> 
+                    </div>
+                    <div class="coffee-info">
+                        <h3 class="coffee-name">Almond</h3>
+                        <p class="coffee-description">Fresh Calfornian almonds</p>
+                        <div class="coffee-details">
+                            <span class="coffee-price">₹1180</span>
+                            <div class="coffee-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star-half-alt"></i>
+                                </div>
+                                <span class="rating-text">(4.0)</span>
+                            </div>
+                        </div>
+                        <div class="coffee-actions">
+                            <button class="btn btn-primary" onclick="buyNow('Almond', 1180)">Buy Now</button>
+                            <button class="btn btn-secondary" onclick="addToCart('Almond', 1180)">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coffee Card 6 -->
+                <div class="coffee-card">
+                    <div class="coffee-image">
+                        <img src="images/cahsew.webp" alt="" style="width: 100%; height: 100%;">
+                    </div>
+                    <div class="coffee-info">
+                        <h3 class="coffee-name">Cashew</h3>
+                        <p class="coffee-description">Dried spiced flakes cashew.</p>
+                        <div class="coffee-details">
+                            <span class="coffee-price">₹1200</span>
+                            <div class="coffee-rating">
+                                <div class="stars">
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <span class="rating-text">(3.9)</span>
+                            </div>
+                        </div>
+                        <div class="coffee-actions">
+                            <button class="btn btn-primary" onclick="buyNow('Cashew', 1200)">Buy Now</button>
+                            <button class="btn btn-secondary" onclick="addToCart('Cashew', 1200)">Add to Cart</button>
+                        </div>
+                    </div>
+                </div>   
+
+            </section>
+    <!-- Footer -->
+    <footer class="footer" id="contact">
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>Brew&Bean Coffee</h3>
+                <p>Pioneer of coffee culture in India since 2000. Experience the finest coffee in a warm, friendly environment.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-facebook"></i></a>
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-instagram"></i></a>
+                    <a href="#"><i class="fab fa-youtube"></i></a>
+                </div>
+            </div>
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <a href="#home">Home</a>
+                <a href="#about">About Us</a>
+                <a href="#menu">Menu</a>
+                <a href="#locations">Locations</a>
+                <a href="#contact">Contact</a>
+            </div>
+            <div class="footer-section">
+                <h3>Contact Info</h3>
+                <p><i class="fas fa-phone"></i> +91-11-4567-8900</p>
+                <p><i class="fas fa-envelope"></i> info@brew&bean.co.in</p>
+                <p><i class="fas fa-map-marker-alt"></i> Gurugram, India</p>
+            </div>
+            <div class="footer-section">
+                <h3>Business Hours</h3>
+                <p>Monday - Friday: 7:00 AM - 10:00 PM</p>
+                <p>Saturday - Sunday: 8:00 AM - 11:00 PM</p>
+                <p>Holidays: 9:00 AM - 9:00 PM</p>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2025 Brew&Bean Coffee Company. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Cart Modal -->
+    <div class="cart-modal" id="cartModal">
+        <div class="cart-content">
+            <div class="cart-header">
+                <h3 class="cart-title">Your Cart</h3>
+                <button class="close-cart" onclick="toggleCart()">×</button>
+            </div>
+            <div class="cart-items" id="cartItems">
+                <p style="text-align: center; color: #666; margin: 2rem 0;">Your cart is empty</p>
+            </div>
+            <div class="cart-total" id="cartTotal" style="display: none;">
+                Total: ₹0
+            </div>
+            <div class="cart-actions" id="cartActions" style="display: none;">
+                <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="checkout()">
+                    Proceed to Checkout
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div class="toast" id="toast">
+        Item added to cart!
+    </div>
+
+    <!-- Login/Register Modal -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-content">
+            <div class="auth-header">
+                <h3 class="auth-title" id="authTitle">Login</h3>
+                <button class="close-auth" onclick="toggleAuthModal()">×</button>
+            </div>
+            <div class="auth-body">
+                <form id="authForm">
+                    <div class="form-group" id="nameGroup" style="display: none;">
+                        <label for="name">Full Name</label>
+                        <input type="text" id="name" name="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Email</label>
+                        <input type="email" id="email" name="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Password</label>
+                        <input type="password" id="password" name="password" required>
+                    </div>
+                    <div class="form-group" id="phoneGroup" style="display: none;">
+                        <label for="phone">Phone</label>
+                        <input type="tel" id="phone" name="phone">
+                    </div>
+                    <button type="submit" class="btn btn-primary" id="authSubmit">Login</button>
+                </form>
+                <div class="auth-switch">
+                    <p id="authSwitchText">Don't have an account? <a href="#" id="authSwitchLink">Register here</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- API Integration Scripts -->
+    <script src="js/api-integration.js"></script>
+    <script src="js/auth-cart-shared.js"></script>
+
+    <script>
+        // Initialize the chocolate page with enhanced functionality
+        BrewBeanShared.initializePage('chocolate');
+        
+        // Override addToCart to use chocolate category
+        function addToCart(name, price) {
+            BrewBeanShared.addToCart(name, price, 'chocolate');
+        }
+        
+        // Override buyNow to use chocolate category
+        function buyNow(name, price) {
+            BrewBeanShared.buyNow(name, price, 'chocolate');
+        }
+        
+        // Expose shared functions globally for onclick handlers
+        window.removeFromCart = BrewBeanShared.removeFromCart;
+        window.toggleCart = BrewBeanShared.toggleCart;
+        window.checkout = BrewBeanShared.checkout;
+        window.toggleAuthModal = BrewBeanShared.toggleAuthModal;
+        window.logout = BrewBeanShared.logout;
+    </script>
+</body>
+</html>
