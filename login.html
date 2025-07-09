@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - Brew&Bean Coffee Company</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * {
             margin: 0;
@@ -405,6 +406,9 @@
                 <span>OR</span>
             </div>
 
+            <!-- Google Sign-In Button Container -->
+            <div id="googleSignInButton" style="display: flex; justify-content: center; margin-bottom: 10px;"></div>
+
             <button class="btn" id="otpLoginBtn" style="background: linear-gradient(45deg, #28a745, #20c997);">
                 <i class="fas fa-mobile-alt"></i> Login with OTP
             </button>
@@ -465,79 +469,77 @@
     <script>
         // Google Sign-In Configuration
         window.googleSignInConfig = {
-            client_id: 'YOUR_GOOGLE_CLIENT_ID', // Replace with your actual Google Client ID
-            callback: handleGoogleSignIn
+            client_id: '746705194177-iise7ibc9oev7rn6usioa9uoahuqfac2.apps.googleusercontent.com', // Your Google Client ID
+            callback: handleGoogleSignIn,
+            auto_select: false,
+            cancel_on_tap_outside: true
         };
 
         // Initialize Google Sign-In
         function initGoogleSignIn() {
-            // This would be where you initialize Google Sign-In
-            // For now, we'll use a demo function
-            console.log('Google Sign-In initialized');
-        }
+            // Initialize Google Identity Services
+            google.accounts.id.initialize({
+                client_id: window.googleSignInConfig.client_id,
+                callback: handleGoogleSignIn,
+                auto_select: false,
+                cancel_on_tap_outside: true,
+            });
 
-        // Handle Google Sign-In
-        function signInWithGoogle() {
-            // Demo Google Sign-In (replace with actual Google OAuth)
-            showGoogleSignInDemo();
-        }
+            // Render the Google Sign-In button
+            google.accounts.id.renderButton(
+                document.getElementById('googleSignInButton'),
+                {
+                    theme: 'outline',
+                    size: 'large',
+                    width: 320,
+                    shape: 'rectangular',
+                    text: 'continue_with',
+                }
+            );
 
-        // Demo Google Sign-In function
-        function showGoogleSignInDemo() {
-            // Show loading state
-            const googleBtn = document.querySelector('.google-btn');
-            const originalText = googleBtn.innerHTML;
-            
-            googleBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Signing in...';
-            googleBtn.disabled = true;
-            
-            // Simulate Google OAuth process
-            setTimeout(() => {
-                // Simulate successful Google sign-in
-                const googleUser = {
-                    email: 'john.doe@gmail.com',
-                    name: 'John Doe',
-                    picture: 'https://lh3.googleusercontent.com/a/default-user=s96-c',
-                    googleId: 'google_' + Date.now()
-                };
-                
-                handleGoogleSignIn(googleUser);
-                
-                // Reset button
-                googleBtn.innerHTML = originalText;
-                googleBtn.disabled = false;
-            }, 2000);
+            // Also display the One Tap UI (optional)
+            google.accounts.id.prompt();
         }
 
         // Handle successful Google sign-in
-        function handleGoogleSignIn(googleUser) {
+        function handleGoogleSignIn(response) {
             try {
-                // In a real app, this would make a backend call to verify the Google token
-                // For now, simulate an immediate successful login
+                // Show signing in message
                 showAlert('Signing in with Google...', 'info');
                 
-                setTimeout(() => {
-                    // Simulate successful login with Google
-                    const userData = {
-                        name: googleUser.name,
-                        email: googleUser.email,
-                        id: googleUser.googleId,
-                        photoUrl: googleUser.picture,
-                        provider: 'google'
-                    };
-                    
-                    // Save to localStorage (same as regular login)
-                    localStorage.setItem('authToken', 'google_auth_' + Date.now());
-                    localStorage.setItem('user', JSON.stringify(userData));
-                    
-                    // Show success and redirect
-                    showAlert('Google sign-in successful! Redirecting...', 'success');
-                    
-                    setTimeout(() => {
-                        // Redirect to home page or dashboard
-                        window.location.href = 'index.html';
-                    }, 1000);
-                }, 1000);
+                // Get the ID token from Google's response
+                const idToken = response.credential;
+                
+                // Send the token to our backend for verification
+                fetch(`${API_BASE_URL}/auth/google`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ idToken })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Save auth data
+                        localStorage.setItem('authToken', data.data.token);
+                        localStorage.setItem('user', JSON.stringify(data.data.user));
+                        
+                        // Show success message
+                        showAlert('Google sign-in successful! Redirecting...', 'success');
+                        
+                        // Redirect to home page
+                        setTimeout(() => {
+                            window.location.href = 'index.html';
+                        }, 1000);
+                    } else {
+                        throw new Error(data.message || 'Authentication failed');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error during Google authentication:', error);
+                    showAlert('Authentication failed: ' + error.message, 'error');
+                });
                 
             } catch (error) {
                 console.error('Error handling Google sign-in:', error);

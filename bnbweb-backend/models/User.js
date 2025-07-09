@@ -22,10 +22,28 @@ const userSchema = new mongoose.Schema({
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    required: function() {
+      // Password is required unless user is signing in with OAuth
+      return !this.googleId;
+    },
     minlength: [8, 'Password must be at least 8 characters long'],
     select: false // Don't include password in queries by default
   },
+  // Add Google OAuth fields
+  googleId: {
+    type: String,
+    unique: true,
+    sparse: true
+  },
+  googleProfile: {
+    type: Object,
+    select: false
+  },
+  profilePicture: {
+    type: String,
+    trim: true
+  },
+  // End of Google OAuth fields
   phone: {
     type: String,
     trim: true,

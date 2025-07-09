@@ -13,7 +13,8 @@ const {
   resendOTP,
   refreshToken,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  googleAuth
 } = require('../controllers/authController');
 const { auth } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
@@ -223,5 +224,8 @@ router.post('/resend-otp', otpLimiter, otpValidation, validate, resendOTP);
 // Password Reset Routes
 router.post('/forgot-password', passwordResetLimiter, forgotPasswordValidation, validate, forgotPassword);
 router.post('/reset-password', authLimiter, resetPasswordValidation, validate, resetPassword);
+
+// Google OAuth Route
+router.post('/google', authLimiter, googleAuth);
 
 module.exports = router;

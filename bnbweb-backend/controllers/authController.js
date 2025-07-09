@@ -4,12 +4,14 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { generateToken, sendSuccess, sendError } = require('../utils/helpers');
+const axios = require('axios');
 
 // Constants
 const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_TIME = 30 * 60 * 1000; // 30 minutes
 const OTP_EXPIRY = 10 * 60 * 1000; // 10 minutes
 const PASSWORD_RESET_EXPIRY = 60 * 60 * 1000; // 1 hour
+const GOOGLE_TOKEN_INFO_URL = 'https://oauth2.googleapis.com/tokeninfo';
 
 // Generate secure OTP
 const generateOTP = () => {
@@ -549,6 +551,96 @@ const resetPassword = asyncHandler(async (req, res) => {
   sendSuccess(res, 'Password reset successful');
 });
 
+// @desc    Authenticate user with Google
+// @route   POST /api/auth/google
+// @access  Public
+const googleAuth = asyncHandler(async (req, res) => {
+  const { idToken } = req.body;
+  
+  if (!idToken) {
+    return sendError(res, 'Google ID token is required', 400);
+  }
+
+  try {
+    // Verify the Google ID token
+    const googleResponse = await axios.get(`${GOOGLE_TOKEN_INFO_URL}?id_token=${idToken}`);
+    const { 
+      email, 
+      name, 
+      sub: googleId, 
+      picture,
+      email_verified 
+    } = googleResponse.data;
+
+    // Check if token is valid and email is verified
+    if (!email_verified) {
+      return sendError(res, 'Google email not verified', 400);
+    }
+
+    // Check if user exists with this Google ID
+    let user = await User.findOne({ googleId });
+
+    // If not found by googleId, try to find by email
+    if (!user) {
+      user = await User.findOne({ email });
+    }
+
+    if (user) {
+      // User exists - update Google info
+      user.googleId = googleId;
+      user.googleProfile = googleResponse.data;
+      user.profilePicture = picture;
+      user.lastLogin = new Date();
+      user.loginIP = req.ip;
+      
+      // If user was found by email but didn't have googleId, update name if it's empty
+      if (!user.googleId && !user.name && name) {
+        user.name = name;
+      }
+
+      await user.save();
+    } else {
+      // Create a new user
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        googleProfile: googleResponse.data,
+        profilePicture: picture,
+        isEmailVerified: true, // Google already verified the email
+        lastLogin: new Date(),
+        loginIP: req.ip,
+        registrationIP: req.ip,
+        isActive: true,
+        role: 'user'
+      });
+    }
+
+    // Generate token
+    const token = generateToken(user._id);
+
+    // Remove sensitive data from response
+    const userResponse = {
+      id: user._id,
+      name: user.name,
+      email: user.email,
+      profilePicture: user.profilePicture,
+      phone: user.phone,
+      role: user.role,
+      isEmailVerified: user.isEmailVerified,
+      lastLogin: user.lastLogin
+    };
+
+    sendSuccess(res, 'Google authentication successful', {
+      token,
+      user: userResponse
+    });
+  } catch (error) {
+    console.error('Google auth error:', error.message);
+    return sendError(res, 'Failed to verify Google token', 401);
+  }
+});
+
 module.exports = {
   register,
   login,
@@ -561,5 +653,6 @@ module.exports = {
   verifyOTP,
   resendOTP,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  googleAuth
 };
