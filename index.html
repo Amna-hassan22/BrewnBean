@@ -838,7 +838,20 @@
             }, 1000);
         });
 
-        // Smooth scrolling for navigation links
+        // Optional: Try to connect to backend (non-blocking)
+        setTimeout(function() {
+            fetch('http://localhost:5000/api')
+              .then(res => res.json())
+              .then(data => {
+                console.log('Backend says:', data.message);
+                // optionally show in HTML
+                // document.body.insertAdjacentHTML('beforeend', `<p>${data.message}</p>`);
+              })
+              .catch(err => {
+                console.log('Backend not available, running in frontend-only mode');
+                // This is normal if backend is not running
+              });
+        }, 1500); // Wait a bit after page loads
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -967,15 +980,6 @@
             }
         `;
         document.head.appendChild(style);
-
-    fetch('http://localhost:3000/api/hello')
-      .then(res => res.json())
-      .then(data => {
-        console.log('Backend says:', data.message);
-        // optionally show in HTML
-        // document.body.insertAdjacentHTML('beforeend', `<p>${data.message}</p>`);
-      })
-      .catch(err => console.error('Error talking to backend:', err));
 
     </script>
 </body>

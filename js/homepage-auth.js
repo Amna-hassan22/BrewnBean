@@ -1,7 +1,7 @@
 // Homepage Authentication Manager
 // This script handles authentication UI updates for the homepage
 
-const API_BASE_URL = 'http://localhost:3000/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 // Initialize authentication state on page load
 document.addEventListener('DOMContentLoaded', function() {
@@ -20,10 +20,10 @@ function updateAuthUI() {
 
     if (token && user.name) {
         // User is logged in
-        authNav.style.display = 'none';
-        registerNav.style.display = 'none';
-        userNav.style.display = 'block';
-        logoutNav.style.display = 'block';
+        if (authNav) authNav.style.display = 'none';
+        if (registerNav) registerNav.style.display = 'none';
+        if (userNav) userNav.style.display = 'block';
+        if (logoutNav) logoutNav.style.display = 'block';
         
         // Update profile button text
         const profileBtn = document.getElementById('profileBtn');
@@ -32,30 +32,17 @@ function updateAuthUI() {
         }
     } else {
         // User is not logged in
-        authNav.style.display = 'block';
-        registerNav.style.display = 'block';
-        userNav.style.display = 'none';
-        logoutNav.style.display = 'none';
+        if (authNav) authNav.style.display = 'block';
+        if (registerNav) registerNav.style.display = 'block';
+        if (userNav) userNav.style.display = 'none';
+        if (logoutNav) logoutNav.style.display = 'none';
     }
 }
 
 // Logout function
 async function logout() {
     try {
-        const token = localStorage.getItem('authToken');
-        
-        if (token) {
-            // Call logout API
-            const response = await fetch(`${API_BASE_URL}/auth/logout`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
-                }
-            });
-        }
-        
-        // Clear local storage
+        // Clear local storage (no need for backend API call for now)
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
         
