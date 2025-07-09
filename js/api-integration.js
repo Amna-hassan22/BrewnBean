@@ -3,8 +3,21 @@
 
 class BrewBeanAPI {
   constructor() {
-    this.baseURL = 'http://localhost:5000/api';
+    // Dynamic API URL based on environment
+    this.baseURL = this.getAPIBaseURL();
     this.token = localStorage.getItem('authToken');
+  }
+
+  // Get API base URL based on environment
+  getAPIBaseURL() {
+    // Check if we're in development (localhost)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:5000/api';
+    }
+    
+    // Production environment - replace with your actual Vercel backend URL
+    // You need to deploy your backend to Vercel or another hosting service
+    return 'https://your-backend-app.vercel.app/api';
   }
 
   // Helper method to make API requests

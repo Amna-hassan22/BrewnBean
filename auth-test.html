@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Authentication Test - Brew&Bean</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+        }
+        
+        .test-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #8B4513;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .nav-test {
+            background: linear-gradient(135deg, #8B4513 0%, #D2691E 100%);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .nav-test ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .nav-test li {
+            background: rgba(255,255,255,0.2);
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .test-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        .btn {
+            background: linear-gradient(45deg, #8B4513, #D2691E);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(45deg, #6c757d, #495057);
+        }
+        
+        .btn-success {
+            background: linear-gradient(45deg, #28a745, #20c997);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(45deg, #dc3545, #e74c3c);
+        }
+        
+        .status {
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #8B4513;
+        }
+        
+        .status h3 {
+            margin: 0 0 10px 0;
+            color: #8B4513;
+        }
+        
+        .status-item {
+            margin: 5px 0;
+            padding: 5px 0;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        
+        .log {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 14px;
+            margin: 20px 0;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 20px;
+            color: #8B4513;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1><i class="fas fa-coffee"></i> Authentication System Test</h1>
+        
+        <div class="nav-test">
+            <ul>
+                <li id="authNav"><i class="fas fa-sign-in-alt"></i> Login</li>
+                <li id="registerNav"><i class="fas fa-user-plus"></i> Register</li>
+                <li id="userNav" style="display: none;"><i class="fas fa-user"></i> <span id="profileBtn">Profile</span></li>
+                <li id="logoutNav" style="display: none;"><i class="fas fa-sign-out-alt"></i> Logout</li>
+            </ul>
+        </div>
+        
+        <div class="test-buttons">
+            <button class="btn" onclick="demoLogin()">Demo Login</button>
+            <button class="btn btn-secondary" onclick="demoLogin('John Doe', 'john@example.com')">Login as John</button>
+            <button class="btn btn-secondary" onclick="demoLogin('Jane Smith', 'jane@example.com')">Login as Jane</button>
+            <button class="btn btn-danger" onclick="logout()">Logout</button>
+            <button class="btn btn-success" onclick="updateStatus()">Refresh Status</button>
+        </div>
+        
+        <div class="status">
+            <h3>Authentication Status</h3>
+            <div id="statusContent">
+                <div class="status-item">Loading...</div>
+            </div>
+        </div>
+        
+        <div class="log" id="logContent">
+            Console log will appear here...
+        </div>
+        
+        <a href="index.html" class="back-link">
+            <i class="fas fa-arrow-left"></i> Back to Homepage
+        </a>
+    </div>
+
+    <script src="js/homepage-auth.js"></script>
+    <script>
+        // Override console.log to display in the log div
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const logDiv = document.getElementById('logContent');
+            const timestamp = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `<div>[${timestamp}] ${args.join(' ')}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+        };
+        
+        // Update status function
+        function updateStatus() {
+            const statusContent = document.getElementById('statusContent');
+            const token = localStorage.getItem('authToken');
+            const user = localStorage.getItem('user');
+            
+            let userObj = null;
+            try {
+                userObj = JSON.parse(user || '{}');
+            } catch (e) {
+                userObj = {};
+            }
+            
+            statusContent.innerHTML = `
+                <div class="status-item"><strong>Token:</strong> ${token ? 'Present' : 'None'}</div>
+                <div class="status-item"><strong>User:</strong> ${userObj.name || 'None'}</div>
+                <div class="status-item"><strong>Email:</strong> ${userObj.email || 'None'}</div>
+                <div class="status-item"><strong>Auth State:</strong> ${window.authState ? (window.authState.isLoggedIn ? 'Logged In' : 'Logged Out') : 'Unknown'}</div>
+                <div class="status-item"><strong>Backend:</strong> ${window.isBackendAvailable ? 'Available' : 'Not Available'}</div>
+            `;
+        }
+        
+        // Update status every 2 seconds
+        setInterval(updateStatus, 2000);
+        
+        // Initial status update
+        setTimeout(updateStatus, 1000);
+        
+        console.log('Authentication test page loaded');
+    </script>
+</body>
+</html>

@@ -1,62 +1,47 @@
 const express = require('express');
+const rateLimit = require('express-rate-limit');
 const {
   createOrder,
   getUserOrders,
   getOrder,
   updateOrderStatus,
   cancelOrder,
-  getOrderStats
+  getOrderStats,
+  getAllOrders,
+  getOrdersByStatus,
+  updateOrderTracking
 } = require('../controllers/orderController');
-const { auth, adminAuth } = require('../middleware/auth');
+const { auth, adminAuth, resourceOwnership } = require('../middleware/auth');
+const { 
+  validate, 
+  validateOrderCreation, 
+  validatePagination,
+  commonValidations 
+} = require('../middleware/validation');
 const { body } = require('express-validator');
 
 const router = express.Router();
 
-// Validation rules
-const createOrderValidation = [
-  body('items')
-    .isArray({ min: 1 })
-    .withMessage('At least one item is required'),
-  body('items.*.product')
-    .isMongoId()
-    .withMessage('Valid product ID is required'),
-  body('items.*.quantity')
-    .isInt({ min: 1 })
-    .withMessage('Quantity must be at least 1'),
-  body('shippingAddress.name')
-    .trim()
-    .notEmpty()
-    .withMessage('Name is required'),
-  body('shippingAddress.phone')
-    .isMobilePhone()
-    .withMessage('Valid phone number is required'),
-  body('shippingAddress.street')
-    .trim()
-    .notEmpty()
-    .withMessage('Street address is required'),
-  body('shippingAddress.city')
-    .trim()
-    .notEmpty()
-    .withMessage('City is required'),
-  body('shippingAddress.state')
-    .trim()
-    .notEmpty()
-    .withMessage('State is required'),
-  body('shippingAddress.postalCode')
-    .trim()
-    .notEmpty()
-    .withMessage('Postal code is required'),
-  body('paymentMethod')
-    .isIn(['cash_on_delivery', 'card', 'upi', 'net_banking', 'wallet'])
-    .withMessage('Valid payment method is required')
-];
+// Rate limiting for order creation
+const orderLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 3, // 3 orders per minute
+  message: {
+    success: false,
+    message: 'Too many orders placed, please try again later'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
+// Additional validation rules
 const updateStatusValidation = [
   body('status')
     .isIn(['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled', 'returned'])
     .withMessage('Valid status is required'),
   body('note')
     .optional()
+    .trim()
     .isLength({ max: 200 })
     .withMessage('Note cannot exceed 200 characters')
 ];
@@ -68,12 +53,34 @@ const cancelOrderValidation = [
     .withMessage('Cancellation reason must be between 5 and 200 characters')
 ];
 
-// Routes
-router.get('/stats', auth, adminAuth, getOrderStats);
-router.post('/', auth, createOrderValidation, createOrder);
-router.get('/', auth, getUserOrders);
-router.get('/:id', auth, getOrder);
-router.put('/:id/status', auth, adminAuth, updateStatusValidation, updateOrderStatus);
-router.put('/:id/cancel', auth, cancelOrderValidation, cancelOrder);
+const trackingValidation = [
+  body('carrier')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Carrier name must be between 2 and 50 characters'),
+  body('trackingNumber')
+    .optional()
+    .trim()
+    .isLength({ min: 5, max: 50 })
+    .withMessage('Tracking number must be between 5 and 50 characters'),
+  body('trackingUrl')
+    .optional()
+    .isURL()
+    .withMessage('Please provide a valid tracking URL')
+];
+
+// Admin routes
+router.get('/admin/all', auth, adminAuth, validatePagination, validate, getAllOrders);
+router.get('/admin/stats', auth, adminAuth, getOrderStats);
+router.get('/admin/status/:status', auth, adminAuth, validatePagination, validate, getOrdersByStatus);
+router.put('/:id/status', commonValidations.mongoId, updateStatusValidation, validate, auth, adminAuth, updateOrderStatus);
+router.put('/:id/tracking', commonValidations.mongoId, trackingValidation, validate, auth, adminAuth, updateOrderTracking);
+
+// Customer routes
+router.post('/', orderLimiter, validateOrderCreation, validate, auth, createOrder);
+router.get('/', validatePagination, validate, auth, getUserOrders);
+router.get('/:id', commonValidations.mongoId, validate, auth, getOrder);
+router.put('/:id/cancel', commonValidations.mongoId, cancelOrderValidation, validate, auth, cancelOrder);
 
 module.exports = router;

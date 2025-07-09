@@ -1,5 +1,16 @@
 // Login Page Authentication Script
-const API_BASE_URL = 'http://localhost:3000/api';
+// Dynamic API URL based on environment
+function getAPIBaseURL() {
+    // Check if we're in development (localhost)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:5000/api';
+    }
+    
+    // Production environment - replace with your actual Vercel backend URL
+    return 'https://your-backend-app.vercel.app/api';
+}
+
+const API_BASE_URL = getAPIBaseURL();
 
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');

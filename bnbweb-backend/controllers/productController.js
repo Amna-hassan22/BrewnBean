@@ -295,6 +295,198 @@ const searchProducts = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Create new product (Admin only)
+// @route   POST /api/products
+// @access  Private (Admin)
+const createProduct = asyncHandler(async (req, res) => {
+  const {
+    name,
+    description,
+    price,
+    originalPrice,
+    category,
+    subCategory,
+    images,
+    stock,
+    sku,
+    specifications,
+    tags,
+    isFeatured,
+    isPopular,
+    discount,
+    weight,
+    dimensions
+  } = req.body;
+
+  // Check if SKU already exists
+  if (sku) {
+    const existingProduct = await Product.findOne({ sku });
+    if (existingProduct) {
+      return sendError(res, 'SKU already exists', 400);
+    }
+  }
+
+  // Validate discount dates
+  if (discount && discount.startDate && discount.endDate) {
+    const startDate = new Date(discount.startDate);
+    const endDate = new Date(discount.endDate);
+    
+    if (startDate >= endDate) {
+      return sendError(res, 'Discount start date must be before end date', 400);
+    }
+  }
+
+  // Create product
+  const product = await Product.create({
+    name: name.trim(),
+    description: description.trim(),
+    price,
+    originalPrice: originalPrice || price,
+    category,
+    subCategory: subCategory?.trim(),
+    images,
+    stock,
+    sku: sku?.trim(),
+    specifications,
+    tags: tags?.map(tag => tag.trim()),
+    isFeatured: isFeatured || false,
+    isPopular: isPopular || false,
+    discount,
+    weight,
+    dimensions
+  });
+
+  sendSuccess(res, 'Product created successfully', { product }, 201);
+});
+
+// @desc    Update product (Admin only)
+// @route   PUT /api/products/:id
+// @access  Private (Admin)
+const updateProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    return sendError(res, 'Product not found', 404);
+  }
+
+  const {
+    name,
+    description,
+    price,
+    originalPrice,
+    category,
+    subCategory,
+    images,
+    stock,
+    sku,
+    specifications,
+    tags,
+    isFeatured,
+    isPopular,
+    discount,
+    weight,
+    dimensions,
+    isActive
+  } = req.body;
+
+  // Check if SKU already exists (excluding current product)
+  if (sku && sku !== product.sku) {
+    const existingProduct = await Product.findOne({ sku, _id: { $ne: req.params.id } });
+    if (existingProduct) {
+      return sendError(res, 'SKU already exists', 400);
+    }
+  }
+
+  // Update product fields
+  if (name !== undefined) product.name = name.trim();
+  if (description !== undefined) product.description = description.trim();
+  if (price !== undefined) product.price = price;
+  if (originalPrice !== undefined) product.originalPrice = originalPrice;
+  if (category !== undefined) product.category = category;
+  if (subCategory !== undefined) product.subCategory = subCategory?.trim();
+  if (images !== undefined) product.images = images;
+  if (stock !== undefined) product.stock = stock;
+  if (sku !== undefined) product.sku = sku?.trim();
+  if (specifications !== undefined) product.specifications = specifications;
+  if (tags !== undefined) product.tags = tags?.map(tag => tag.trim());
+  if (isFeatured !== undefined) product.isFeatured = isFeatured;
+  if (isPopular !== undefined) product.isPopular = isPopular;
+  if (discount !== undefined) product.discount = discount;
+  if (weight !== undefined) product.weight = weight;
+  if (dimensions !== undefined) product.dimensions = dimensions;
+  if (isActive !== undefined) product.isActive = isActive;
+
+  await product.save();
+
+  sendSuccess(res, 'Product updated successfully', { product });
+});
+
+// @desc    Delete product (Admin only)
+// @route   DELETE /api/products/:id
+// @access  Private (Admin)
+const deleteProduct = asyncHandler(async (req, res) => {
+  const product = await Product.findById(req.params.id);
+
+  if (!product) {
+    return sendError(res, 'Product not found', 404);
+  }
+
+  // Soft delete - just mark as inactive
+  product.isActive = false;
+  await product.save();
+
+  sendSuccess(res, 'Product deleted successfully');
+});
+
+// @desc    Get product statistics (Admin only)
+// @route   GET /api/products/admin/stats
+// @access  Private (Admin)
+const getProductStats = asyncHandler(async (req, res) => {
+  const stats = await Product.aggregate([
+    {
+      $group: {
+        _id: '$category',
+        count: { $sum: 1 },
+        totalStock: { $sum: '$stock' },
+        averagePrice: { $avg: '$price' },
+        averageRating: { $avg: '$rating.average' }
+      }
+    },
+    {
+      $sort: { count: -1 }
+    }
+  ]);
+
+  const totalProducts = await Product.countDocuments({ isActive: true });
+  const outOfStock = await Product.countDocuments({ stock: 0, isActive: true });
+  const lowStock = await Product.countDocuments({ stock: { $lte: 10, $gt: 0 }, isActive: true });
+  const featuredProducts = await Product.countDocuments({ isFeatured: true, isActive: true });
+  const popularProducts = await Product.countDocuments({ isPopular: true, isActive: true });
+
+  const topRatedProducts = await Product.find({ isActive: true })
+    .sort({ 'rating.average': -1, 'rating.count': -1 })
+    .limit(5)
+    .select('name rating.average rating.count price');
+
+  const recentProducts = await Product.find({ isActive: true })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .select('name createdAt price stock');
+
+  sendSuccess(res, 'Product statistics retrieved successfully', {
+    categoryStats: stats,
+    summary: {
+      totalProducts,
+      outOfStock,
+      lowStock,
+      featuredProducts,
+      popularProducts
+    },
+    topRated: topRatedProducts,
+    recent: recentProducts
+  });
+});
+
 module.exports = {
   getProducts,
   getProduct,
@@ -302,5 +494,9 @@ module.exports = {
   getFeaturedProducts,
   getPopularProducts,
   addProductReview,
-  searchProducts
+  searchProducts,
+  createProduct,
+  updateProduct,
+  deleteProduct,
+  getProductStats
 };

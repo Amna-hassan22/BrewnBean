@@ -187,11 +187,73 @@ const getCartCount = asyncHandler(async (req, res) => {
   sendSuccess(res, 'Cart count retrieved successfully', { count });
 });
 
+// @desc    Sync cart (merge local storage cart with server cart)
+// @route   POST /api/cart/sync
+// @access  Private
+const syncCart = asyncHandler(async (req, res) => {
+  const { items } = req.body;
+  
+  if (!items || !Array.isArray(items)) {
+    return sendError(res, 'Invalid cart items format', 400);
+  }
+
+  let cart = await Cart.findOne({ user: req.user.id });
+  
+  if (!cart) {
+    cart = await Cart.create({ user: req.user.id, items: [] });
+  }
+
+  // Process each item from local storage
+  for (const localItem of items) {
+    if (!localItem.productId || !localItem.quantity) {
+      continue; // Skip invalid items
+    }
+
+    // Check if product exists and is active
+    const product = await Product.findById(localItem.productId);
+    if (!product || !product.isActive) {
+      continue; // Skip unavailable products
+    }
+
+    // Check if item already exists in server cart
+    const existingItemIndex = cart.items.findIndex(
+      item => item.product.toString() === localItem.productId
+    );
+
+    const maxQuantity = Math.min(localItem.quantity, product.stock, 10);
+
+    if (existingItemIndex > -1) {
+      // Update existing item (take the maximum of local and server quantities)
+      cart.items[existingItemIndex].quantity = Math.max(
+        cart.items[existingItemIndex].quantity,
+        maxQuantity
+      );
+      cart.items[existingItemIndex].price = product.price;
+    } else {
+      // Add new item
+      cart.items.push({
+        product: localItem.productId,
+        quantity: maxQuantity,
+        price: product.price
+      });
+    }
+  }
+
+  await cart.save();
+
+  // Populate cart for response
+  cart = await Cart.findById(cart._id)
+    .populate('items.product', 'name price images stock isActive');
+
+  sendSuccess(res, 'Cart synced successfully', { cart });
+});
+
 module.exports = {
   getCart,
   addToCart,
   updateCartItem,
   removeFromCart,
   clearCart,
-  getCartCount
+  getCartCount,
+  syncCart
 };

@@ -254,11 +254,137 @@ const getOrderStats = asyncHandler(async (req, res) => {
   });
 });
 
+// @desc    Get all orders (Admin)
+// @route   GET /api/orders/admin/all
+// @access  Private (Admin)
+const getAllOrders = asyncHandler(async (req, res) => {
+  const {
+    page = 1,
+    limit = 10,
+    status,
+    search,
+    sortBy = 'createdAt',
+    sortOrder = 'desc'
+  } = req.query;
+
+  const { page: currentPage, limit: itemsPerPage, skip } = getPagination(page, limit);
+  
+  const filter = {};
+  
+  if (status) {
+    filter.orderStatus = status;
+  }
+  
+  if (search) {
+    filter.$or = [
+      { orderNumber: { $regex: search, $options: 'i' } },
+      { 'shippingAddress.name': { $regex: search, $options: 'i' } },
+      { 'shippingAddress.phone': { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  const sortObject = {};
+  sortObject[sortBy] = sortOrder === 'desc' ? -1 : 1;
+
+  const totalItems = await Order.countDocuments(filter);
+
+  const orders = await Order.find(filter)
+    .populate('user', 'name email phone')
+    .populate('items.product', 'name images')
+    .sort(sortObject)
+    .skip(skip)
+    .limit(itemsPerPage);
+
+  const pagination = getPaginationInfo(totalItems, currentPage, itemsPerPage);
+
+  sendSuccess(res, 'Orders retrieved successfully', {
+    orders,
+    pagination
+  });
+});
+
+// @desc    Get orders by status (Admin)
+// @route   GET /api/orders/admin/status/:status
+// @access  Private (Admin)
+const getOrdersByStatus = asyncHandler(async (req, res) => {
+  const { status } = req.params;
+  const {
+    page = 1,
+    limit = 10
+  } = req.query;
+
+  const { page: currentPage, limit: itemsPerPage, skip } = getPagination(page, limit);
+  
+  const filter = { orderStatus: status };
+
+  const totalItems = await Order.countDocuments(filter);
+
+  const orders = await Order.find(filter)
+    .populate('user', 'name email phone')
+    .populate('items.product', 'name images')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(itemsPerPage);
+
+  const pagination = getPaginationInfo(totalItems, currentPage, itemsPerPage);
+
+  sendSuccess(res, `Orders with status '${status}' retrieved successfully`, {
+    orders,
+    pagination,
+    status
+  });
+});
+
+// @desc    Update order tracking (Admin)
+// @route   PUT /api/orders/:id/tracking
+// @access  Private (Admin)
+const updateOrderTracking = asyncHandler(async (req, res) => {
+  const { carrier, trackingNumber, trackingUrl, estimatedDelivery } = req.body;
+
+  const order = await Order.findById(req.params.id);
+
+  if (!order) {
+    return sendError(res, 'Order not found', 404);
+  }
+
+  // Update tracking information
+  order.tracking = {
+    carrier: carrier || order.tracking?.carrier,
+    trackingNumber: trackingNumber || order.tracking?.trackingNumber,
+    trackingUrl: trackingUrl || order.tracking?.trackingUrl
+  };
+
+  if (estimatedDelivery) {
+    order.estimatedDelivery = new Date(estimatedDelivery);
+  }
+
+  // If tracking number is provided and order is confirmed, update to shipped
+  if (trackingNumber && order.orderStatus === 'confirmed') {
+    order.orderStatus = 'shipped';
+    order.statusHistory.push({
+      status: 'shipped',
+      note: `Order shipped with tracking number: ${trackingNumber}`,
+      timestamp: new Date()
+    });
+  }
+
+  await order.save();
+
+  const updatedOrder = await Order.findById(order._id)
+    .populate('items.product', 'name images')
+    .populate('user', 'name email phone');
+
+  sendSuccess(res, 'Order tracking updated successfully', { order: updatedOrder });
+});
+
 module.exports = {
   createOrder,
   getUserOrders,
   getOrder,
   updateOrderStatus,
   cancelOrder,
-  getOrderStats
+  getOrderStats,
+  getAllOrders,
+  getOrdersByStatus,
+  updateOrderTracking
 };

@@ -828,6 +828,31 @@
 
     <!-- API Integration Scripts -->
     <script>
+        // Environment-specific API URL handler
+        (function() {
+            // Function to get the correct API URL
+            function getAPIURL() {
+                const hostname = window.location.hostname;
+                
+                // Development environment
+                if (hostname === 'localhost' || hostname === '127.0.0.1') {
+                    return 'http://localhost:5000/api';
+                }
+                
+                // Production environment - you need to deploy your backend
+                // For now, this will work in demo mode
+                return 'https://your-backend-app.vercel.app/api';
+            }
+            
+            // Set global API URL
+            window.API_BASE_URL = getAPIURL();
+            
+            console.log('Environment detected:', window.location.hostname);
+            console.log('API Base URL set to:', window.API_BASE_URL);
+        })();
+    </script>
+    
+    <script>
         // Check if scripts exist before loading
         function loadScript(src) {
             return new Promise((resolve, reject) => {

@@ -1,38 +1,50 @@
 // Registration Page Authentication Script
-const API_BASE_URL = 'http://localhost:3000/api';
+// Dynamic API URL based on environment
+function getAPIBaseURL() {
+    // Check if we're in development (localhost)
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        return 'http://localhost:5000/api';
+    }
+    
+    // Production environment - replace with your actual Vercel backend URL
+    return 'https://your-backend-app.vercel.app/api';
+}
+
+const API_BASE_URL = getAPIBaseURL();
 
 document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('registerForm');
-    }
+    
+    // Initialize registration handler
+    const authHandler = {
+        init() {
+            this.bindEvents();
+            this.setupPasswordStrength();
+            this.checkExistingAuth();
+        },
 
-    init() {
-        this.bindEvents();
-        this.setupPasswordStrength();
-        this.checkExistingAuth();
-    }
+        bindEvents() {
+            // Registration form
+            document.getElementById('registrationForm')?.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.handleRegistration();
+            });
 
-    bindEvents() {
-        // Registration form
-        document.getElementById('registrationForm')?.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.handleRegistration();
-        });
+            // Real-time validation
+            document.getElementById('email')?.addEventListener('blur', () => {
+                this.validateEmail();
+            });
 
-        // Real-time validation
-        document.getElementById('email')?.addEventListener('blur', () => {
-            this.validateEmail();
-        });
+            document.getElementById('phone')?.addEventListener('blur', () => {
+                this.validatePhone();
+            });
 
-        document.getElementById('phone')?.addEventListener('blur', () => {
-            this.validatePhone();
-        });
+            document.getElementById('confirmPassword')?.addEventListener('input', () => {
+                this.validatePasswordMatch();
+            });
+        },
 
-        document.getElementById('confirmPassword')?.addEventListener('input', () => {
-            this.validatePasswordMatch();
-        });
-    }
-
-    setupPasswordStrength() {
+        setupPasswordStrength() {
         const passwordField = document.getElementById('password');
         const strengthText = document.getElementById('strengthText');
         const strengthBar = document.getElementById('strengthBar');

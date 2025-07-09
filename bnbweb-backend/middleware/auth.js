@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { sendError } = require('../utils/helpers');
 
 // Protect routes - Authentication middleware
 const auth = async (req, res, next) => {
@@ -11,11 +12,13 @@ const auth = async (req, res, next) => {
       token = req.headers.authorization.split(' ')[1];
     }
 
+    // Check for token in cookies (if using cookie-based auth)
+    if (!token && req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
+
     if (!token) {
-      return res.status(401).json({
-        success: false,
-        message: 'Access denied. No token provided.'
-      });
+      return sendError(res, 'Access denied. No token provided.', 401);
     }
 
     try {
@@ -23,53 +26,66 @@ const auth = async (req, res, next) => {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       // Get user from token
-      const user = await User.findById(decoded.id).select('-password');
+      const user = await User.findById(decoded.id).select('+passwordChangedAt');
       
       if (!user) {
-        return res.status(401).json({
-          success: false,
-          message: 'Invalid token. User not found.'
-        });
+        return sendError(res, 'Invalid token. User not found.', 401);
       }
 
       if (!user.isActive) {
-        return res.status(401).json({
-          success: false,
-          message: 'User account is inactive.'
-        });
+        return sendError(res, 'User account is inactive.', 401);
+      }
+
+      // Check if account is locked
+      if (user.isAccountLocked()) {
+        return sendError(res, 'Account is temporarily locked. Please try again later.', 423);
+      }
+
+      // Check if password was changed after token was issued
+      if (user.changedPasswordAfter(decoded.iat)) {
+        return sendError(res, 'User recently changed password. Please log in again.', 401);
       }
 
       req.user = user;
       next();
-    } catch (error) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid token.'
-      });
+    } catch (jwtError) {
+      let message = 'Invalid token.';
+      
+      if (jwtError.name === 'TokenExpiredError') {
+        message = 'Token has expired. Please log in again.';
+      } else if (jwtError.name === 'JsonWebTokenError') {
+        message = 'Invalid token format.';
+      }
+      
+      return sendError(res, message, 401);
     }
   } catch (error) {
     console.error('Auth middleware error:', error);
-    return res.status(500).json({
-      success: false,
-      message: 'Server error'
-    });
+    return sendError(res, 'Authentication failed. Please try again.', 500);
   }
 };
 
 // Admin middleware
 const adminAuth = (req, res, next) => {
   if (!req.user) {
-    return res.status(401).json({
-      success: false,
-      message: 'Access denied. Authentication required.'
-    });
+    return sendError(res, 'Access denied. Authentication required.', 401);
   }
 
   if (req.user.role !== 'admin') {
-    return res.status(403).json({
-      success: false,
-      message: 'Access denied. Admin privileges required.'
-    });
+    return sendError(res, 'Access denied. Admin privileges required.', 403);
+  }
+
+  next();
+};
+
+// Moderator or Admin middleware
+const moderatorAuth = (req, res, next) => {
+  if (!req.user) {
+    return sendError(res, 'Access denied. Authentication required.', 401);
+  }
+
+  if (!['admin', 'moderator'].includes(req.user.role)) {
+    return sendError(res, 'Access denied. Moderator privileges required.', 403);
   }
 
   next();
@@ -82,17 +98,23 @@ const optionalAuth = async (req, res, next) => {
 
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
       token = req.headers.authorization.split(' ')[1];
-      
+    }
+
+    if (!token && req.cookies && req.cookies.token) {
+      token = req.cookies.token;
+    }
+
+    if (token) {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id).select('-password');
+        const user = await User.findById(decoded.id).select('+passwordChangedAt');
         
-        if (user && user.isActive) {
+        if (user && user.isActive && !user.isAccountLocked() && !user.changedPasswordAfter(decoded.iat)) {
           req.user = user;
         }
       } catch (error) {
         // Token invalid but continue without user
-        console.log('Optional auth token invalid');
+        console.log('Optional auth token invalid:', error.message);
       }
     }
 
@@ -103,4 +125,52 @@ const optionalAuth = async (req, res, next) => {
   }
 };
 
-module.exports = { auth, adminAuth, optionalAuth };
+// Check if user owns resource or is admin
+const resourceOwnership = (req, res, next) => {
+  const resourceUserId = req.params.userId || req.body.userId || req.query.userId;
+  
+  if (!resourceUserId) {
+    return sendError(res, 'Resource user ID is required.', 400);
+  }
+
+  if (req.user.id !== resourceUserId && req.user.role !== 'admin') {
+    return sendError(res, 'Access denied. You can only access your own resources.', 403);
+  }
+
+  next();
+};
+
+// Rate limiting middleware for sensitive operations
+const sensitiveOperation = (req, res, next) => {
+  // This would typically integrate with Redis or similar for distributed rate limiting
+  // For now, we'll just add a simple check
+  
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutes
+  const maxAttempts = 5;
+  
+  if (!req.user.sensitiveOpAttempts) {
+    req.user.sensitiveOpAttempts = [];
+  }
+  
+  // Remove old attempts
+  req.user.sensitiveOpAttempts = req.user.sensitiveOpAttempts.filter(
+    attempt => now - attempt < windowMs
+  );
+  
+  if (req.user.sensitiveOpAttempts.length >= maxAttempts) {
+    return sendError(res, 'Too many sensitive operations. Please try again later.', 429);
+  }
+  
+  req.user.sensitiveOpAttempts.push(now);
+  next();
+};
+
+module.exports = { 
+  auth, 
+  adminAuth, 
+  moderatorAuth, 
+  optionalAuth, 
+  resourceOwnership,
+  sensitiveOperation
+};
