@@ -92,26 +92,175 @@ function updateAuthUI() {
             // User is logged in
             if (authNav) authNav.style.display = 'none';
             if (registerNav) registerNav.style.display = 'none';
-            if (userNav) userNav.style.display = 'block';
+            if (userNav) {
+                userNav.style.display = 'block';
+                userNav.classList.add('logged-in-indicator');
+            }
             if (logoutNav) logoutNav.style.display = 'block';
             
-            // Update profile button text
+            // Hide demo login button
+            const demoLoginSection = document.getElementById('demoLoginSection');
+            if (demoLoginSection) {
+                demoLoginSection.style.display = 'none';
+            }
+            
+            // Update profile button text with user name
             if (profileBtn) {
                 profileBtn.innerHTML = `<i class="fas fa-user"></i> ${authState.user.name}`;
+                profileBtn.title = `Welcome, ${authState.user.name}! Click to view your profile.`;
             }
+            
+            // Show welcome message
+            showWelcomeMessage();
             
             console.log('UI updated for logged in user:', authState.user.name);
         } else {
             // User is not logged in
             if (authNav) authNav.style.display = 'block';
             if (registerNav) registerNav.style.display = 'block';
-            if (userNav) userNav.style.display = 'none';
+            if (userNav) {
+                userNav.style.display = 'none';
+                userNav.classList.remove('logged-in-indicator');
+            }
             if (logoutNav) logoutNav.style.display = 'none';
+            
+            // Show demo login button
+            const demoLoginSection = document.getElementById('demoLoginSection');
+            if (demoLoginSection) {
+                demoLoginSection.style.display = 'block';
+            }
+            
+            // Hide welcome message
+            hideWelcomeMessage();
             
             console.log('UI updated for logged out user');
         }
     } catch (error) {
         console.error('Error updating auth UI:', error);
+    }
+}
+
+// Show welcome message for logged in users
+function showWelcomeMessage() {
+    try {
+        // Remove existing welcome message if any
+        hideWelcomeMessage();
+        
+        // Create welcome message element
+        const welcomeMessage = document.createElement('div');
+        welcomeMessage.id = 'welcomeMessage';
+        welcomeMessage.innerHTML = `
+            <div class="welcome-container">
+                <div class="welcome-content">
+                    <i class="fas fa-check-circle"></i>
+                    <span>Welcome back, ${authState.user.name}! You are logged in.</span>
+                    <button onclick="hideWelcomeMessage()" class="close-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Add styles
+        welcomeMessage.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 12px 0;
+            z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            animation: slideDown 0.5s ease-out;
+        `;
+        
+        // Add animation styles to head
+        if (!document.querySelector('#welcomeStyles')) {
+            const style = document.createElement('style');
+            style.id = 'welcomeStyles';
+            style.textContent = `
+                @keyframes slideDown {
+                    from { transform: translateY(-100%); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                
+                @keyframes slideUp {
+                    from { transform: translateY(0); opacity: 1; }
+                    to { transform: translateY(-100%); opacity: 0; }
+                }
+                
+                .welcome-container {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    padding: 0 20px;
+                }
+                
+                .welcome-content {
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 10px;
+                    font-size: 16px;
+                    font-weight: 500;
+                }
+                
+                .welcome-content i.fa-check-circle {
+                    color: #90EE90;
+                    font-size: 18px;
+                }
+                
+                .close-btn {
+                    background: none;
+                    border: none;
+                    color: white;
+                    font-size: 16px;
+                    cursor: pointer;
+                    padding: 5px;
+                    margin-left: 10px;
+                    border-radius: 50%;
+                    transition: background-color 0.3s;
+                }
+                
+                .close-btn:hover {
+                    background-color: rgba(255,255,255,0.2);
+                }
+                
+                @media (max-width: 768px) {
+                    .welcome-content {
+                        font-size: 14px;
+                        padding: 0 10px;
+                    }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        // Add to page
+        document.body.insertBefore(welcomeMessage, document.body.firstChild);
+        
+        // Auto-hide after 5 seconds
+        setTimeout(() => {
+            hideWelcomeMessage();
+        }, 5000);
+        
+    } catch (error) {
+        console.error('Error showing welcome message:', error);
+    }
+}
+
+// Hide welcome message
+function hideWelcomeMessage() {
+    try {
+        const welcomeMessage = document.getElementById('welcomeMessage');
+        if (welcomeMessage) {
+            welcomeMessage.style.animation = 'slideUp 0.5s ease-out';
+            setTimeout(() => {
+                welcomeMessage.remove();
+            }, 500);
+        }
+    } catch (error) {
+        console.error('Error hiding welcome message:', error);
     }
 }
 
@@ -281,6 +430,12 @@ function demoLogin(userName = 'Demo User', userEmail = 'demo@brewbean.com') {
         // Update UI
         updateAuthUI();
         
+        // Hide demo login button
+        const demoLoginSection = document.getElementById('demoLoginSection');
+        if (demoLoginSection) {
+            demoLoginSection.style.display = 'none';
+        }
+        
         // Show success message
         showNotification(`Welcome ${userName}!`, 'success');
         
@@ -373,10 +528,11 @@ function getColorForType(type) {
     }
 }
 
-// Expose functions globally for testing
-window.demoLogin = demoLogin;
-window.logout = logout;
+// Make functions globally accessible
 window.updateAuthUI = updateAuthUI;
+window.hideWelcomeMessage = hideWelcomeMessage;
+window.showWelcomeMessage = showWelcomeMessage;
+window.demoLogin = demoLogin;
 
 // Add CSS animations for notifications
 const style = document.createElement('style');
