@@ -117,6 +117,36 @@ const userSchema = new mongoose.Schema({
     type: Date,
     select: false
   },
+  // JWT Token invalidation for secure logout
+  invalidatedTokens: [{
+    token: {
+      type: String,
+      required: true
+    },
+    invalidatedAt: {
+      type: Date,
+      default: Date.now
+    },
+    reason: {
+      type: String,
+      enum: ['logout', 'password_change', 'security_breach'],
+      default: 'logout'
+    }
+  }],
+  // Session management
+  activeSessions: [{
+    tokenId: String,
+    deviceInfo: String,
+    ipAddress: String,
+    lastActivity: {
+      type: Date,
+      default: Date.now
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   loginAttempts: {
     type: Number,
     default: 0,
@@ -264,6 +294,30 @@ userSchema.virtual('accountStatus').get(function() {
   if (!this.isEmailVerified) return 'pending_verification';
   return 'active';
 });
+
+// Check if token is invalidated
+userSchema.methods.isTokenInvalidated = function(token) {
+  return this.invalidatedTokens.some(invalidated => invalidated.token === token);
+};
+
+// Invalidate a specific token
+userSchema.methods.invalidateToken = function(token, reason = 'logout') {
+  this.invalidatedTokens.push({
+    token,
+    reason,
+    invalidatedAt: new Date()
+  });
+};
+
+// Clean up old invalidated tokens (older than 7 days)
+userSchema.methods.cleanupInvalidatedTokens = function() {
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  
+  this.invalidatedTokens = this.invalidatedTokens.filter(
+    token => token.invalidatedAt > sevenDaysAgo
+  );
+};
 
 // Check if password was changed after JWT was issued
 userSchema.methods.changedPasswordAfter = function(JWTTimestamp) {

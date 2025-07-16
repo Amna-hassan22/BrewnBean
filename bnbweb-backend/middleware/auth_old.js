@@ -89,6 +89,22 @@ const auth = async (req, res, next) => {
     return sendError(res, 'Authentication failed.', 500);
   }
 };
+    } catch (jwtError) {
+      let message = 'Invalid token.';
+      
+      if (jwtError.name === 'TokenExpiredError') {
+        message = 'Token has expired. Please log in again.';
+      } else if (jwtError.name === 'JsonWebTokenError') {
+        message = 'Invalid token format.';
+      }
+      
+      return sendError(res, message, 401);
+    }
+  } catch (error) {
+    console.error('Auth middleware error:', error);
+    return sendError(res, 'Authentication failed. Please try again.', 500);
+  }
+};
 
 // Admin middleware
 const adminAuth = (req, res, next) => {
@@ -132,27 +148,10 @@ const optionalAuth = async (req, res, next) => {
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await User.findById(decoded.id)
-          .select('+passwordChangedAt +invalidatedTokens +activeSessions');
+        const user = await User.findById(decoded.id).select('+passwordChangedAt');
         
-        if (user && user.isActive && !user.isAccountLocked() && 
-            !user.changedPasswordAfter(decoded.iat) && 
-            !user.isTokenInvalidated(token)) {
-          
-          // Validate session if tokenId exists
-          if (decoded.tokenId) {
-            const activeSession = user.activeSessions.find(
-              session => session.tokenId === decoded.tokenId
-            );
-            if (activeSession) {
-              req.user = user;
-              req.token = token;
-              req.tokenId = decoded.tokenId;
-            }
-          } else {
-            req.user = user;
-            req.token = token;
-          }
+        if (user && user.isActive && !user.isAccountLocked() && !user.changedPasswordAfter(decoded.iat)) {
+          req.user = user;
         }
       } catch (error) {
         // Token invalid but continue without user
@@ -182,63 +181,37 @@ const resourceOwnership = (req, res, next) => {
   next();
 };
 
-// Rate limiting middleware based on user
-const userRateLimit = (maxRequests = 100, windowMs = 15 * 60 * 1000) => {
-  const requests = new Map();
-
-  return (req, res, next) => {
-    const userId = req.user?.id || req.ip;
-    const now = Date.now();
-    const windowStart = now - windowMs;
-
-    // Clean old entries
-    if (requests.has(userId)) {
-      const userRequests = requests.get(userId).filter(time => time > windowStart);
-      requests.set(userId, userRequests);
-    }
-
-    const userRequests = requests.get(userId) || [];
-    
-    if (userRequests.length >= maxRequests) {
-      return sendError(res, 'Too many requests. Please try again later.', 429);
-    }
-
-    userRequests.push(now);
-    requests.set(userId, userRequests);
-    
-    next();
-  };
-};
-
-// Verify email middleware
-const requireEmailVerification = (req, res, next) => {
-  if (!req.user.isEmailVerified) {
-    return sendError(res, 'Email verification required. Please verify your email address.', 403);
+// Rate limiting middleware for sensitive operations
+const sensitiveOperation = (req, res, next) => {
+  // This would typically integrate with Redis or similar for distributed rate limiting
+  // For now, we'll just add a simple check
+  
+  const now = Date.now();
+  const windowMs = 15 * 60 * 1000; // 15 minutes
+  const maxAttempts = 5;
+  
+  if (!req.user.sensitiveOpAttempts) {
+    req.user.sensitiveOpAttempts = [];
   }
+  
+  // Remove old attempts
+  req.user.sensitiveOpAttempts = req.user.sensitiveOpAttempts.filter(
+    attempt => now - attempt < windowMs
+  );
+  
+  if (req.user.sensitiveOpAttempts.length >= maxAttempts) {
+    return sendError(res, 'Too many sensitive operations. Please try again later.', 429);
+  }
+  
+  req.user.sensitiveOpAttempts.push(now);
   next();
 };
 
-// Security headers middleware
-const securityHeaders = (req, res, next) => {
-  // Remove sensitive headers
-  res.removeHeader('X-Powered-By');
-  
-  // Add security headers
-  res.setHeader('X-Content-Type-Options', 'nosniff');
-  res.setHeader('X-Frame-Options', 'DENY');
-  res.setHeader('X-XSS-Protection', '1; mode=block');
-  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
-  
-  next();
-};
-
-module.exports = {
-  auth,
-  adminAuth,
-  moderatorAuth,
-  optionalAuth,
+module.exports = { 
+  auth, 
+  adminAuth, 
+  moderatorAuth, 
+  optionalAuth, 
   resourceOwnership,
-  userRateLimit,
-  requireEmailVerification,
-  securityHeaders
+  sensitiveOperation
 };

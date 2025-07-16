@@ -17,9 +17,6 @@ const { validate } = require('../middleware/validation');
 
 const router = express.Router();
 
-// Apply security headers to all routes
-router.use(securityHeaders);
-
 // Rate limiting for auth endpoints
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
@@ -64,8 +61,14 @@ const passwordResetLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+    success: false,
+    message: 'Too many password reset attempts, please try again later'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// Validation schemas
+// Enhanced validation rules
 const registerValidation = [
   body('name')
     .trim()
@@ -76,11 +79,20 @@ const registerValidation = [
   body('email')
     .isEmail()
     .normalizeEmail()
-    .withMessage('Please enter a valid email'),
+    .withMessage('Please enter a valid email')
+    .custom((value) => {
+      // Block disposable email domains
+      const disposableDomains = ['tempmail.org', '10minutemail.com', 'guerrillamail.com'];
+      const domain = value.split('@')[1];
+      if (disposableDomains.includes(domain)) {
+        throw new Error('Disposable email addresses are not allowed');
+      }
+      return true;
+    }),
   body('password')
     .isLength({ min: 8, max: 128 })
     .withMessage('Password must be between 8 and 128 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]/)
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
   body('phone')
     .optional()
@@ -104,27 +116,60 @@ const registerValidation = [
   body('gender')
     .optional()
     .isIn(['male', 'female', 'other'])
-    .withMessage('Please select a valid gender')
+    .withMessage('Please select a valid gender'),
+  body('acceptTerms')
+    .equals('true')
+    .withMessage('You must accept the terms and conditions')
 ];
 
 const loginValidation = [
   body('email')
-    .notEmpty()
-    .withMessage('Email is required')
-    .isLength({ max: 255 })
-    .withMessage('Email is too long'),
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please enter a valid email'),
   body('password')
     .notEmpty()
     .withMessage('Password is required')
     .isLength({ max: 128 })
-    .withMessage('Password is too long'),
-  body('rememberMe')
-    .optional()
-    .isBoolean()
-    .withMessage('Remember me must be true or false')
+    .withMessage('Password is too long')
 ];
 
-const forgotPasswordValidation = [
+const updateProfileValidation = [
+  body('name')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('Name must be between 2 and 50 characters')
+    .matches(/^[a-zA-Z\s]+$/)
+    .withMessage('Name can only contain letters and spaces'),
+  body('phone')
+    .optional()
+    .matches(/^[+]?[\d\s\-\(\)]+$/)
+    .withMessage('Please enter a valid phone number')
+    .isLength({ min: 10, max: 15 })
+    .withMessage('Phone number must be between 10 and 15 digits'),
+  body('address.street')
+    .optional()
+    .trim()
+    .isLength({ min: 5, max: 100 })
+    .withMessage('Street address must be between 5 and 100 characters'),
+  body('address.city')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('City must be between 2 and 50 characters'),
+  body('address.state')
+    .optional()
+    .trim()
+    .isLength({ min: 2, max: 50 })
+    .withMessage('State must be between 2 and 50 characters'),
+  body('address.postalCode')
+    .optional()
+    .matches(/^[0-9]{6}$/)
+    .withMessage('Please enter a valid 6-digit postal code')
+];
+
+const otpValidation = [
   body('email')
     .isEmail()
     .normalizeEmail()
@@ -142,19 +187,6 @@ const verifyOtpValidation = [
     .withMessage('OTP must be 6 digits')
 ];
 
-const resetPasswordValidation = [
-  body('resetToken')
-    .notEmpty()
-    .withMessage('Reset token is required')
-    .isLength({ min: 64, max: 64 })
-    .withMessage('Invalid reset token format'),
-  body('newPassword')
-    .isLength({ min: 8, max: 128 })
-    .withMessage('Password must be between 8 and 128 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]/)
-    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
-];
-
 const changePasswordValidation = [
   body('currentPassword')
     .notEmpty()
@@ -164,70 +196,49 @@ const changePasswordValidation = [
   body('newPassword')
     .isLength({ min: 8, max: 128 })
     .withMessage('New password must be between 8 and 128 characters')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>])[A-Za-z\d!@#$%^&*(),.?":{}|<>]/)
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('New password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
 ];
 
-// Public Authentication Routes
-router.post('/register', 
-  authLimiter, 
-  registerValidation, 
-  validate, 
-  register
-);
+const forgotPasswordValidation = [
+  body('email')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Please enter a valid email')
+];
 
-router.post('/login', 
-  loginLimiter, 
-  loginValidation, 
-  validate, 
-  login
-);
+const resetPasswordValidation = [
+  body('token')
+    .notEmpty()
+    .withMessage('Reset token is required')
+    .isLength({ min: 64, max: 64 })
+    .withMessage('Invalid reset token format'),
+  body('password')
+    .isLength({ min: 8, max: 128 })
+    .withMessage('Password must be between 8 and 128 characters')
+    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+    .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
+];
 
-// Password Reset Routes (Public)
-router.post('/forgot-password', 
-  passwordResetLimiter, 
-  forgotPasswordValidation, 
-  validate, 
-  forgotPassword
-);
+// Authentication Routes
+router.post('/register', authLimiter, registerValidation, validate, register);
+router.post('/login', authLimiter, loginValidation, validate, login);
+router.post('/refresh-token', auth, refreshToken);
+router.get('/profile', auth, getProfile);
+router.put('/profile', auth, updateProfileValidation, validate, updateProfile);
+router.put('/change-password', auth, changePasswordValidation, validate, changePassword);
+router.post('/logout', auth, logout);
 
-router.post('/verify-otp', 
-  otpLimiter, 
-  verifyOtpValidation, 
-  validate, 
-  verifyOTP
-);
+// OTP Routes
+router.post('/send-otp', otpLimiter, otpValidation, validate, sendOTP);
+router.post('/verify-otp', authLimiter, verifyOtpValidation, validate, verifyOTP);
+router.post('/resend-otp', otpLimiter, otpValidation, validate, resendOTP);
 
-router.post('/reset-password', 
-  authLimiter, 
-  resetPasswordValidation, 
-  validate, 
-  resetPassword
-);
+// Password Reset Routes
+router.post('/forgot-password', passwordResetLimiter, forgotPasswordValidation, validate, forgotPassword);
+router.post('/reset-password', authLimiter, resetPasswordValidation, validate, resetPassword);
 
-// Protected Routes (Require Authentication)
-router.use(auth); // Apply auth middleware to all routes below
-
-router.get('/me', 
-  userRateLimit(50), // 50 requests per 15 minutes for profile access
-  getMe
-);
-
-router.put('/change-password', 
-  authLimiter, 
-  changePasswordValidation, 
-  validate, 
-  changePassword
-);
-
-router.post('/logout', 
-  userRateLimit(10), // 10 logout requests per 15 minutes
-  logout
-);
-
-router.post('/logout-all', 
-  authLimiter, // More restrictive for security
-  logoutAll
-);
+// Google OAuth Route
+router.post('/google', authLimiter, googleAuth);
 
 module.exports = router;
