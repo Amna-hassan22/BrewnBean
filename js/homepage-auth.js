@@ -98,12 +98,6 @@ function updateAuthUI() {
             }
             if (logoutNav) logoutNav.style.display = 'block';
             
-            // Hide demo login button
-            const demoLoginSection = document.getElementById('demoLoginSection');
-            if (demoLoginSection) {
-                demoLoginSection.style.display = 'none';
-            }
-            
             // Update profile button text with user name
             if (profileBtn) {
                 profileBtn.innerHTML = `<i class="fas fa-user"></i> ${authState.user.name}`;
@@ -123,12 +117,6 @@ function updateAuthUI() {
                 userNav.classList.remove('logged-in-indicator');
             }
             if (logoutNav) logoutNav.style.display = 'none';
-            
-            // Show demo login button
-            const demoLoginSection = document.getElementById('demoLoginSection');
-            if (demoLoginSection) {
-                demoLoginSection.style.display = 'block';
-            }
             
             // Hide welcome message
             hideWelcomeMessage();
@@ -405,48 +393,6 @@ async function logout() {
     }
 }
 
-// Demo login function (for testing)
-function demoLogin(userName = 'Demo User', userEmail = 'demo@brewbean.com') {
-    try {
-        const user = {
-            name: userName,
-            email: userEmail,
-            id: 'demo123'
-        };
-        
-        const token = 'demo-token-' + Date.now();
-        
-        // Save to localStorage
-        localStorage.setItem('authToken', token);
-        localStorage.setItem('user', JSON.stringify(user));
-        
-        // Update local state
-        authState = {
-            isLoggedIn: true,
-            user: user,
-            token: token
-        };
-        
-        // Update UI
-        updateAuthUI();
-        
-        // Hide demo login button
-        const demoLoginSection = document.getElementById('demoLoginSection');
-        if (demoLoginSection) {
-            demoLoginSection.style.display = 'none';
-        }
-        
-        // Show success message
-        showNotification(`Welcome ${userName}!`, 'success');
-        
-        console.log('Demo login successful for:', userName);
-        
-    } catch (error) {
-        console.error('Demo login error:', error);
-        showNotification('Demo login failed', 'error');
-    }
-}
-
 // Show notification function
 function showNotification(message, type = 'info') {
     try {
@@ -532,7 +478,6 @@ function getColorForType(type) {
 window.updateAuthUI = updateAuthUI;
 window.hideWelcomeMessage = hideWelcomeMessage;
 window.showWelcomeMessage = showWelcomeMessage;
-window.demoLogin = demoLogin;
 
 // Add CSS animations for notifications
 const style = document.createElement('style');
